@@ -20,18 +20,33 @@ Note: The webserver built into Jenkins (Winstone) uses HTTP by default
 #### Prerequite
 
 $ yum install docker nginx -y
-$ mkdir jenkins-nginx-tls && cd jenkins-nginx-tls && mkdir jenkins-server && mkdir jenkins-data && mkdir jenkins-nginx
 $ useradd -d /var/jenkins_home -u 1000 -m -s /bin/bash jenkins
 $ chown -R jenkins:jenkins /var/jenkins_home
 
 #### Create self-signed certificates
 
-$ docker run -d --name nginx nginxi \
-$ bash -c "clear && docker exec -it nginx sh" \
-$ touch /var/sslNginx && cd /var/sslNginx \
-
 $ openssl req -x509 -newkey rsa:4096 -sha256 -nodes -keyout nginxkey.pem -out nginxCert.pem -subj "/CN=CA" -days 365
 
-$ docker run --rm -d  -v /var/jenkins_home:/var/jenkins_home -v date2:/var/lib/jenkins -p 443:8443 -p 8080:8080 -p 50000:50000 --env JENKINS_ARGS="--httpPort=-1 --httpsPort=8443 --httpsCertificate=path/to/cert --httpsPrivateKey=path/to/privatekey" --env JAVA_OPTS="-Xmx8192m" Jenkins-march
+#### Create Jenkins
 
+$ docker run -d \
+    -v your_local_config_file.conf:/etc/nginx/nginx.conf \
+    -p 80:80 \
+    --name nginx \
+    blacklabelops/nginx
 
+Note: Starting Jenkins without any port mapping
+
+#### HTTPS Reverse Proxy
+
+$ docker run -d \
+    -p 443:443 \
+    -v /var/nginx-cert:/var/nginx-cert \
+    -e "SERVER1REVERSE_PROXY_LOCATION1=/" \
+    -e "SERVER1REVERSE_PROXY_PASS1=http://localhost/" \
+    -e "SERVER1HTTPS_ENABLED=true" \
+    -e "SERVER1CERTIFICATE_FILE=/var/nginx-cert/nginxCert.pem" \
+    -e "SERVER1CERTIFICATE_KEY=/var/nginx-cert/nginxkey.pem" \
+    -e "SERVER1HTTP_ENABLED=false" \
+    --name nginx \
+    blacklabelops/nginx
