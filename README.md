@@ -23,25 +23,12 @@ $ yum update -y
 $ yum install -y docker
 $ systemctl start docker
 $ usermod -a -G docker ec2-user
-
 $ mkdir jenkins-nginx-tls && cd jenkins-nginx-tls && mkdir jenkins-server && mkdir jenkins-data && mkdir jenkins-nginx
-
 $ useradd -d /var/jenkins_home -u 1000 -m -s /bin/bash jenkins
 $ chown -R jenkins:jenkins /var/log/jenkins
 
-## create Jenkins server Dockerfile
+#### create Jenkins server
 
-~~~
-vi jenkins-server/Dockerfile
-FROM jenkins:1.609.1
-MAINTAINER Ahmet Atalay
-USER root
-RUN mkdir /var/log/jenkins
-RUN mkdir /var/cache/jenkins
-RUN chown -R jenkins:jenkins /var/log/jenkins
-RUN chown -R jenkins:jenkins /var/cache/jenkins
-USER jenkins
-# Set Defaults
-ENV JAVA_OPTS="-Xmx4096m"
-ENV JENKINS_OPTS=" - handlerCountStartup=100 - handlerCountMax=300 - logfile=/var/log/jenkins/jenkins.log - webroot=/var/cache/jenkins/war"
-~~~
+$ docker run -d --name jenkins jenkins:alpine
+
+$ docker run -d -p 80:80 --link jenkins:webapp --name jenkins-proxy jvandusen/nginx-proxy-webapp
